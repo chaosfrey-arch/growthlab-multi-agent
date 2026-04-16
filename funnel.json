@@ -1,0 +1,61 @@
+{
+  "scenario": "音乐流媒体 App AARRR 增长漏斗（模拟 Sparkify 场景）",
+  "product": "Sparkify — 音乐流媒体平台",
+  "funnel": [
+    {"step": "广告曝光→App下载", "key": "download", "rate": 0.06},
+    {"step": "下载→注册完成",     "key": "register", "rate": 0.52},
+    {"step": "注册→首周活跃",     "key": "activate", "rate": 0.35, "is_pain_point": true},
+    {"step": "活跃→付费订阅",     "key": "subscribe", "rate": 0.08},
+    {"step": "付费→次月续费",     "key": "retain",    "rate": 0.72}
+  ],
+  "daily_traffic": 80000,
+  "business_goals": [
+    "提升注册→首周活跃转化率（当前 35%，目标 45%）",
+    "提升免费→付费订阅转化率（当前 8%，目标 12%）",
+    "降低付费用户月度流失率（当前 28%，目标 20%）"
+  ],
+  "allowed_interventions": [
+    {
+      "id": "onboarding_optimize",
+      "name": "新用户引导流程优化",
+      "target_step": "activate",
+      "phase": "Activation",
+      "description": "简化首次使用流程，3步内完成个性化歌单推荐"
+    },
+    {
+      "id": "social_invite",
+      "name": "社交邀请激励",
+      "target_step": "download",
+      "phase": "Acquisition",
+      "description": "老用户邀请好友注册，双方各得7天VIP体验"
+    },
+    {
+      "id": "push_reactivation",
+      "name": "沉默用户Push唤醒",
+      "target_step": "activate",
+      "phase": "Retention",
+      "description": "对7日未登录用户推送个性化歌单+限时福利"
+    },
+    {
+      "id": "trial_upgrade",
+      "name": "免费试用转付费引导",
+      "target_step": "subscribe",
+      "phase": "Revenue",
+      "description": "在用户触达VIP功能限制时弹出限时折扣"
+    },
+    {
+      "id": "churn_prevention",
+      "name": "续费挽回礼包",
+      "target_step": "retain",
+      "phase": "Retention",
+      "description": "到期前3天推送专属折扣+独家内容预告"
+    },
+    {
+      "id": "personalized_playlist",
+      "name": "个性化歌单推荐优化",
+      "target_step": "activate",
+      "phase": "Activation",
+      "description": "基于用户首次听歌行为实时生成推荐歌单"
+    }
+  ]
+}
