@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GrowthLab — 自动化增长实验多智能体系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f9fc;
+    --surface: #ffffff;
+    --surface-2: #f1f3f8;
+    --border: #e2e5ef;
+    --text: #1e2235;
+    --text-dim: #6b7094;
+    --accent: #6366f1;
+    --accent-glow: rgba(99,102,241,0.08);
+    --green: #16a34a;
+    --green-dim: rgba(22,163,74,0.08);
+    --amber: #d97706;
+    --amber-dim: rgba(217,119,6,0.08);
+    --red: #dc2626;
+    --red-dim: rgba(220,38,38,0.08);
+    --blue: #2563eb;
+    --cyan: #0891b2;
+    --purple: #9333ea;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .hero {
+    padding: 60px 40px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #1e2235 0%, #6366f1 50%, #9333ea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .hero .subtitle {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    max-width: 700px;
+    margin: 0 auto 24px;
+  }
+  .tech-tags {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .tech-tag {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 48px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .icon {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Architecture ── */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .arch-flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    overflow-x: auto;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 16px;
+    flex-wrap: nowrap;
+  }
+  .flow-node {
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    min-width: 100px;
+    position: relative;
+  }
+  .flow-node.agent {
+    background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(147,51,234,0.08));
+    border: 1px solid rgba(99,102,241,0.25);
+    color: var(--accent);
+  }
+  .flow-node.gate {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    min-width: 70px;
+    font-weight: 500;
+  }
+  .flow-node.tool {
+    background: var(--green-dim);
+    border: 1px solid rgba(22,163,74,0.2);
+    color: var(--green);
+    font-size: 0.78rem;
+  }
+  .flow-arrow {
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+  .flow-arrow.down {
+    text-align: center;
+    margin: 8px 0;
+    font-size: 1.2rem;
+  }
+  .flow-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 4px;
+  }
+  .flow-loop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 20px;
+    border: 1px dashed rgba(99,102,241,0.3);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-size: 0.8rem;
+  }
+
+  /* ── Funnel ── */
+  .funnel-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    display: flex;
+    gap: 32px;
+    align-items: stretch;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .funnel-visual {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: center;
+  }
+  .funnel-step {
+    position: relative;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #fff;
+    transition: all 0.3s;
+    clip-path: polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%);
+  }
+  .funnel-step:hover {
+    filter: brightness(1.2);
+    transform: scale(1.02);
+  }
+  .funnel-step .rate {
+    position: absolute;
+    right: -70px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--surface-2);
+    padding: 2px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .funnel-drop {
+    font-size: 0.7rem;
+    color: var(--red);
+    text-align: center;
+    padding: 2px 0;
+  }
+  .funnel-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .funnel-detail-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+  }
+  .funnel-detail-card .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .funnel-detail-card .step-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    flex: 1;
+  }
+  .funnel-detail-card .step-rate {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .pain-badge {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--red-dim);
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  /* ── Experiment Cards ── */
+  .exp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .exp-grid { grid-template-columns: 1fr; }
+    .funnel-container { flex-direction: column; }
+    .funnel-visual { flex: 0 0 auto; }
+  }
+  .exp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .exp-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .exp-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(99,102,241,0.10);
+  }
+  .exp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .exp-round {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .exp-verdict {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .verdict-push { background: var(--green-dim); color: var(--green); }
+  .verdict-iterate { background: var(--amber-dim); color: var(--amber); }
+  .verdict-abandon { background: var(--red-dim); color: var(--red); }
+
+  .exp-title {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .exp-hypothesis {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-box {
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-value.positive { color: var(--green); }
+  .stat-value.neutral { color: var(--amber); }
+
+  .ci-bar-container {
+    padding: 8px 0;
+  }
+  .ci-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .ci-bar-bg {
+    height: 8px;
+    background: var(--surface-2);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ci-bar-fill {
+    position: absolute;
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    opacity: 0.5;
+  }
+  .ci-bar-point {
+    position: absolute;
+    top: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid #fff;
+    transform: translateX(-50%);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .exp-learning {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    border-left: 2px solid var(--accent);
+    padding-left: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Charts ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .chart-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-dim);
+  }
+  .chart-wrap {
+    position: relative;
+    height: 250px;
+  }
+
+  /* ── Gate ── */
+  .gate-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .gate-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .gate-table td {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .gate-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .gate-pass { background: var(--green-dim); color: var(--green); }
+  .gate-retry { background: var(--amber-dim); color: var(--amber); }
+  .gate-stop { background: var(--red-dim); color: var(--red); }
+
+  /* ── Tracking Events ── */
+  .tracking-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .tracking-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  @media (max-width: 900px) {
+    .tracking-grid { grid-template-columns: 1fr; }
+  }
+  .tracking-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+  .tracking-card .round-label {
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .tracking-event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.78rem;
+  }
+  .tracking-event .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    flex-shrink: 0;
+  }
+  .tracking-event code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: var(--cyan);
+    background: rgba(8,145,178,0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════ Hero ════ -->
+<div class="hero">
+  <h1>GrowthLab</h1>
+  <p class="subtitle">基于 LangGraph 编排的多智能体增长实验平台 — 自动运行「策略→执行→A/B测试→复盘」闭环，3 轮实验迭代优化 AARRR 漏斗</p>
+  <div class="tech-tags">
+    <span class="tech-tag">LangGraph</span>
+    <span class="tech-tag">Multi-Agent</span>
+    <span class="tech-tag">DeepSeek API</span>
+    <span class="tech-tag">A/B Testing</span>
+    <span class="tech-tag">z-test + 95% CI</span>
+    <span class="tech-tag">Python</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ════ Architecture ════ -->
+<div class="section-title">
+  <span class="icon" style="background:var(--accent-glow);color:var(--accent);">&#9881;</span>
+  系统架构
+</div>
+<div class="arch-flow">
+  <div class="flow-row">
+    <div class="flow-node agent">&#129504; 策略师<br><small style="font-weight:400;opacity:0.7">分析漏斗 + 提假设</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node gate">&#9989; 门控<br><small>lift &lt; 50%?</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node agent">&#128203; 执行官<br><small style="font-weight:400;opacity:0.7">A/B 方案 + 埋点</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node gate">&#9989; 门控<br><small>字段完整?</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node agent">&#128202; 分析师<br><small style="font-weight:400;opacity:0.7">统计检验 + 解读</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node gate">&#9989; 门控<br><small>p值合理?</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node agent">&#128221; 复盘官<br><small style="font-weight:400;opacity:0.7">学习 + 下一步</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node gate">&#9989; 门控<br><small>结论有效?</small></div>
+  </div>
+  <div class="flow-row" style="gap:24px;margin-top:4px;">
+    <div class="flow-node tool" style="margin-left:0;">&#127922; ab_test.py<br><small>伯努利采样 + z检验 + CI</small></div>
+    <div class="flow-node tool">&#128203; funnel.json<br><small>AARRR 漏斗基线</small></div>
+    <div class="flow-node tool">&#128218; experiments.json<br><small>历史实验记录</small></div>
+  </div>
+  <div class="flow-loop">
+    &#128260; 复盘结论回传策略师 → 开启下一轮（共 3 轮迭代）｜ RETRY → 重试当前 Agent ｜ STOP → 终止流程
+  </div>
+</div>
+
+<!-- ════ Funnel ════ -->
+<div class="section-title">
+  <span class="icon" style="background:var(--green-dim);color:var(--green);">&#9660;</span>
+  AARRR 增长漏斗
+</div>
+<div class="funnel-container">
+  <div class="funnel-visual">
+    <div class="funnel-step" style="width:300px;background:linear-gradient(135deg,#6366f1,#818cf8);">
+      广告曝光 → App下载
+      <span class="rate">6%</span>
+    </div>
+    <div class="funnel-drop">▼ -48%</div>
+    <div class="funnel-step" style="width:270px;background:linear-gradient(135deg,#3b82f6,#60a5fa);">
+      下载 → 注册完成
+      <span class="rate">52%</span>
+    </div>
+    <div class="funnel-drop">▼ -17%</div>
+    <div class="funnel-step" style="width:230px;background:linear-gradient(135deg,#ef4444,#f87171);box-shadow:0 0 16px rgba(239,68,68,0.2);">
+      注册 → 首周活跃 &#x26A0;
+      <span class="rate" style="color:var(--red);border-color:rgba(239,68,68,0.3);">35%</span>
+    </div>
+    <div class="funnel-drop">▼ -27%</div>
+    <div class="funnel-step" style="width:180px;background:linear-gradient(135deg,#f59e0b,#fbbf24);">
+      活跃 → 付费订阅
+      <span class="rate">8%</span>
+    </div>
+    <div class="funnel-drop">▼ +64%</div>
+    <div class="funnel-step" style="width:160px;background:linear-gradient(135deg,#22c55e,#4ade80);">
+      付费 → 次月续费
+      <span class="rate">72%</span>
+    </div>
+  </div>
+  <div class="funnel-details">
+    <div class="funnel-detail-card">
+      <div class="dot" style="background:var(--accent);"></div>
+      <div class="step-name">Acquisition</div>
+      <div>广告曝光 → 下载</div>
+      <div class="step-rate">6%</div>
+    </div>
+    <div class="funnel-detail-card">
+      <div class="dot" style="background:var(--blue);"></div>
+      <div class="step-name">Activation</div>
+      <div>下载 → 注册</div>
+      <div class="step-rate">52%</div>
+    </div>
+    <div class="funnel-detail-card" style="border-color:rgba(239,68,68,0.3);">
+      <div class="dot" style="background:var(--red);"></div>
+      <div class="step-name">Activation</div>
+      <div>注册 → 首周活跃</div>
+      <span class="pain-badge">痛点</span>
+      <div class="step-rate" style="color:var(--red);">35%</div>
+    </div>
+    <div class="funnel-detail-card">
+      <div class="dot" style="background:var(--amber);"></div>
+      <div class="step-name">Revenue</div>
+      <div>活跃 → 付费</div>
+      <div class="step-rate">8%</div>
+    </div>
+    <div class="funnel-detail-card">
+      <div class="dot" style="background:var(--green);"></div>
+      <div class="step-name">Retention</div>
+      <div>付费 → 续费</div>
+      <div class="step-rate">72%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Experiments ════ -->
+<div class="section-title">
+  <span class="icon" style="background:rgba(168,85,247,0.12);color:var(--purple);">&#9878;</span>
+  3 轮 A/B 实验结果
+</div>
+<div class="exp-grid">
+
+  <!-- Round 1 -->
+  <div class="exp-card">
+    <div class="exp-header">
+      <span class="exp-round">Round 1</span>
+      <span class="exp-verdict verdict-push">推全量</span>
+    </div>
+    <div class="exp-title">新用户引导流程优化</div>
+    <div class="exp-hypothesis">简化引导流程，3步内完成个性化歌单推荐 → 提升注册→首周活跃转化率</div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-label">Lift</div>
+        <div class="stat-value positive">+17.0%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">P-Value</div>
+        <div class="stat-value positive">&lt; 0.001</div>
+      </div>
+    </div>
+    <div class="ci-bar-container">
+      <div class="ci-label-row">
+        <span>95% CI: [13.9%, 20.1%]</span>
+        <span style="color:var(--green);">&#10003; 显著</span>
+      </div>
+      <div class="ci-bar-bg">
+        <div class="ci-bar-fill" style="left:27.7%;width:12.5%;"></div>
+        <div class="ci-bar-point" style="left:34.0%;"></div>
+      </div>
+      <div class="ci-label-row" style="margin-top:2px;">
+        <span>0%</span><span>25%</span><span>50%</span>
+      </div>
+    </div>
+    <div class="exp-learning">简化引导 + 前置个性化价值展示有效。实际提升低于预期25%，引导优化非唯一瓶颈因素。</div>
+  </div>
+
+  <!-- Round 2 -->
+  <div class="exp-card">
+    <div class="exp-header">
+      <span class="exp-round">Round 2</span>
+      <span class="exp-verdict verdict-iterate">继续迭代</span>
+    </div>
+    <div class="exp-title">个性化歌单推荐优化</div>
+    <div class="exp-hypothesis">基于用户首次听歌行为实时生成推荐歌单 → 进一步提升激活转化</div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-label">Lift</div>
+        <div class="stat-value neutral">+6.9%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">P-Value</div>
+        <div class="stat-value positive">&lt; 0.001</div>
+      </div>
+    </div>
+    <div class="ci-bar-container">
+      <div class="ci-label-row">
+        <span>95% CI: [3.9%, 10.0%]</span>
+        <span style="color:var(--green);">&#10003; 显著</span>
+      </div>
+      <div class="ci-bar-bg">
+        <div class="ci-bar-fill" style="left:7.8%;width:12.2%;"></div>
+        <div class="ci-bar-point" style="left:13.9%;"></div>
+      </div>
+      <div class="ci-label-row" style="margin-top:2px;">
+        <span>0%</span><span>25%</span><span>50%</span>
+      </div>
+    </div>
+    <div class="exp-learning">叠加个性化推荐边际收益递减。瓶颈从“快速呈现价值”转向“推荐质量与精准度”。</div>
+  </div>
+
+  <!-- Round 3 -->
+  <div class="exp-card">
+    <div class="exp-header">
+      <span class="exp-round">Round 3</span>
+      <span class="exp-verdict verdict-push">推全量</span>
+    </div>
+    <div class="exp-title">沉默用户 Push 唤醒</div>
+    <div class="exp-hypothesis">7日未登录用户推送个性化歌单 + 限时VIP福利 → 召回沉默用户提升激活率</div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-label">Lift</div>
+        <div class="stat-value positive">+12.1%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">P-Value</div>
+        <div class="stat-value positive">&lt; 0.001</div>
+      </div>
+    </div>
+    <div class="ci-bar-container">
+      <div class="ci-label-row">
+        <span>95% CI: [9.0%, 15.2%]</span>
+        <span style="color:var(--green);">&#10003; 显著</span>
+      </div>
+      <div class="ci-bar-bg">
+        <div class="ci-bar-fill" style="left:17.9%;width:12.5%;"></div>
+        <div class="ci-bar-point" style="left:24.2%;"></div>
+      </div>
+      <div class="ci-label-row" style="margin-top:2px;">
+        <span>0%</span><span>25%</span><span>50%</span>
+      </div>
+    </div>
+    <div class="exp-learning">外部触达（Push）是有效的激活补充策略。单次Push效果有上限，需分层多次触达。</div>
+  </div>
+
+</div>
+
+<!-- ════ Charts ════ -->
+<div class="section-title">
+  <span class="icon" style="background:rgba(6,182,212,0.12);color:var(--cyan);">&#128200;</span>
+  数据可视化
+</div>
+<div class="charts-grid">
+  <div class="chart-card">
+    <h3>Lift 对比 + 置信区间</h3>
+    <div class="chart-wrap"><canvas id="liftChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>预期 vs 实际提升</h3>
+    <div class="chart-wrap"><canvas id="expectedChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ════ Tracking Events ════ -->
+<div class="section-title">
+  <span class="icon" style="background:rgba(6,182,212,0.12);color:var(--cyan);">&#128205;</span>
+  埋点方案设计
+</div>
+<div class="tracking-section">
+  <p style="font-size:0.85rem;color:var(--text-dim);">每轮实验由执行官 Agent 自动生成埋点清单，覆盖实验关键路径的核心事件。</p>
+  <div class="tracking-grid">
+    <div class="tracking-card">
+      <div class="round-label">Round 1 · 引导优化</div>
+      <div class="tracking-event"><span class="dot"></span><code>onboarding_start</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>onboarding_step_complete</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>onboarding_complete</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>personalized_playlist_gen</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>first_song_play</code></div>
+    </div>
+    <div class="tracking-card">
+      <div class="round-label">Round 2 · 个性化推荐</div>
+      <div class="tracking-event"><span class="dot"></span><code>playlist_exposed</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>playlist_click</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>first_song_in_playlist</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>playlist_completion_rate</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>weekly_active_check</code></div>
+    </div>
+    <div class="tracking-card">
+      <div class="round-label">Round 3 · Push 唤醒</div>
+      <div class="tracking-event"><span class="dot"></span><code>push_sent</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>push_click</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>vip_trial_claimed</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>reactivation_session</code></div>
+      <div class="tracking-event"><span class="dot"></span><code>7d_retention_check</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Gate Table ════ -->
+<div class="section-title">
+  <span class="icon" style="background:rgba(245,158,11,0.12);color:var(--amber);">&#128737;</span>
+  三级门控机制
+</div>
+<table class="gate-table">
+  <thead>
+    <tr>
+      <th>Agent</th>
+      <th>校验规则</th>
+      <th>PASS 条件</th>
+      <th>RETRY 触发</th>
+      <th>STOP 触发</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:600;">策略师</td>
+      <td>lift 合理性 + 字段完整 + 策略不重复</td>
+      <td><span class="gate-badge gate-pass">expected_lift &le; 50%</span></td>
+      <td><span class="gate-badge gate-retry">lift &gt; 50% 疑似幻觉</span></td>
+      <td><span class="gate-badge gate-stop">重试 &ge; 2 次</span></td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">执行官</td>
+      <td>埋点数量 + 样本量 + 必需字段</td>
+      <td><span class="gate-badge gate-pass">tracking &ge; 2 & sample &ge; 1000</span></td>
+      <td><span class="gate-badge gate-retry">埋点不足 / 字段缺失</span></td>
+      <td><span class="gate-badge gate-stop">重试 &ge; 2 次</span></td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">分析师</td>
+      <td>p值范围 + lift方向一致性 + 字段完整</td>
+      <td><span class="gate-badge gate-pass">0 &le; p &le; 1 & 方向一致</span></td>
+      <td><span class="gate-badge gate-retry">p值异常 / lift矛盾</span></td>
+      <td><span class="gate-badge gate-stop">重试 &ge; 2 次</span></td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">复盘官</td>
+      <td>结论四选一 + 学习实质 + 下一步方向</td>
+      <td><span class="gate-badge gate-pass">verdict &in; 4 个有效值</span></td>
+      <td><span class="gate-badge gate-retry">结论无效 / 字段缺失</span></td>
+      <td><span class="gate-badge gate-stop">重试 &ge; 2 次</span></td>
+    </tr>
+  </tbody>
+</table>
+
+</div><!-- /container -->
+
+<div class="footer">
+  GrowthLab &mdash; Multi-Agent Growth Experiment System &nbsp;|&nbsp;
+  LangGraph + DeepSeek + scipy &nbsp;|&nbsp;
+  <a href="https://github.com/chaosfrey-arch" target="_blank">GitHub @chaosfrey-arch</a>
+</div>
+
+<script>
+Chart.defaults.color = '#6b7094';
+Chart.defaults.borderColor = '#e2e5ef';
+Chart.defaults.font.family = "-apple-system, 'PingFang SC', sans-serif";
+
+// ── Lift + CI Chart ──
+const liftCtx = document.getElementById('liftChart').getContext('2d');
+new Chart(liftCtx, {
+  type: 'bar',
+  data: {
+    labels: ['R1 引导优化', 'R2 个性化推荐', 'R3 Push唤醒'],
+    datasets: [{
+      label: 'Observed Lift',
+      data: [17.0, 6.9, 12.1],
+      backgroundColor: ['rgba(34,197,94,0.7)', 'rgba(245,158,11,0.7)', 'rgba(34,197,94,0.7)'],
+      borderRadius: 6,
+      barPercentage: 0.5,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterBody: function(items) {
+            const cis = [
+              '95% CI: [13.9%, 20.1%]',
+              '95% CI: [3.9%, 10.0%]',
+              '95% CI: [9.0%, 15.2%]',
+            ];
+            return cis[items[0].dataIndex];
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 25,
+        grid: { color: '#e8eaf0' },
+        ticks: { callback: v => v + '%' }
+      },
+      x: {
+        grid: { display: false }
+      }
+    }
+  },
+  plugins: [{
+    id: 'errorBars',
+    afterDraw(chart) {
+      const meta = chart.getDatasetMeta(0);
+      const ctx = chart.ctx;
+      const cis = [[13.86, 20.11], [3.9, 9.99], [8.97, 15.21]];
+      meta.data.forEach((bar, i) => {
+        const yScale = chart.scales.y;
+        const x = bar.x;
+        const yLow = yScale.getPixelForValue(cis[i][0]);
+        const yHigh = yScale.getPixelForValue(cis[i][1]);
+        ctx.save();
+        ctx.strokeStyle = '#6b7094';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, yLow);
+        ctx.lineTo(x, yHigh);
+        ctx.stroke();
+        // caps
+        ctx.beginPath();
+        ctx.moveTo(x - 6, yLow);
+        ctx.lineTo(x + 6, yLow);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - 6, yHigh);
+        ctx.lineTo(x + 6, yHigh);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+// ── Expected vs Actual ──
+const expCtx = document.getElementById('expectedChart').getContext('2d');
+new Chart(expCtx, {
+  type: 'bar',
+  data: {
+    labels: ['R1 引导优化', 'R2 个性化推荐', 'R3 Push唤醒'],
+    datasets: [
+      {
+        label: '预期 Lift',
+        data: [25, 20, 15],
+        backgroundColor: 'rgba(99,102,241,0.3)',
+        borderColor: 'rgba(99,102,241,0.6)',
+        borderWidth: 1,
+        borderRadius: 6,
+        barPercentage: 0.4,
+      },
+      {
+        label: '实际 Lift',
+        data: [17.0, 6.9, 12.1],
+        backgroundColor: 'rgba(34,197,94,0.6)',
+        borderColor: 'rgba(34,197,94,0.8)',
+        borderWidth: 1,
+        borderRadius: 6,
+        barPercentage: 0.4,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { boxWidth: 12, padding: 16, font: { size: 11 } }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 30,
+        grid: { color: '#e8eaf0' },
+        ticks: { callback: v => v + '%' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
