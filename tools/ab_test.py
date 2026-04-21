@@ -1,19 +1,25 @@
 """
 A/B 测试工具 — 伯努利采样 + 双比例 z 检验 + 95% 置信区间
+
+设计说明：
+每种干预策略有一个固定的真实提升值（true_lift），对 Agent 保密。
+随机性仅来自伯努利采样过程（模拟用户层面的自然波动），
+而非 true_lift 本身——这与真实 A/B 测试的统计原理一致：
+策略的真实效果是固定的，观测到的 lift 因样本噪声而波动。
 """
 
 import numpy as np
 from scipy.stats import norm
 
-# 每种干预策略的"真实提升"区间（对 agent 保密）
-# 模拟器从区间内随机抽取 true_lift，制造有成功也有失败的实验
+# 每种干预策略的固定真实提升（对 agent 保密）
+# 值基于行业经验设定：有的策略效果好，有的效果弱甚至无效
 INTERVENTION_TRUE_LIFTS = {
-    "onboarding_optimize":    (0.10, 0.30),   # 引导优化：效果较好
-    "social_invite":          (0.05, 0.25),   # 社交邀请：不确定性大
-    "push_reactivation":      (-0.05, 0.15),  # Push唤醒：可能无效
-    "trial_upgrade":          (0.03, 0.18),   # 付费引导：中等效果
-    "churn_prevention":       (0.05, 0.20),   # 续费挽回：较稳定
-    "personalized_playlist":  (0.08, 0.28),   # 个性化推荐：效果好
+    "onboarding_optimize":    0.18,    # 引导优化：效果较好
+    "social_invite":          0.12,    # 社交邀请：中等效果
+    "push_reactivation":      0.05,    # Push唤醒：效果弱，样本量小时可能不显著
+    "trial_upgrade":          0.09,    # 付费引导：中等效果
+    "churn_prevention":       0.14,    # 续费挽回：较稳定
+    "personalized_playlist":  0.15,    # 个性化推荐：效果较好
 }
 
 
@@ -29,9 +35,9 @@ def run_ab_test(intervention_id: str, baseline_rate: float, sample_size: int = 1
     返回:
         包含 lift、p_value、ci_95、significant 的结果字典
     """
-    # 从预设区间随机抽取"真实"提升（agent 不知道这个值）
-    lift_range = INTERVENTION_TRUE_LIFTS.get(intervention_id, (0.0, 0.10))
-    true_lift = np.random.uniform(*lift_range)
+    # 固定的真实提升（agent 不知道这个值）
+    # 随机性仅来自下方的伯努利采样，不来自 true_lift 本身
+    true_lift = INTERVENTION_TRUE_LIFTS.get(intervention_id, 0.05)
     treatment_rate = min(baseline_rate * (1 + true_lift), 0.99)
 
     # 伯努利采样
